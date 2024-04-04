@@ -26,7 +26,7 @@
 (defn get-documents
   []
   "Get all invoice-data from flour"
-  (let [date-after (.toString (.minus (Instant/now) (Duration/ofDays 365)))
+  (let [date-after (.toString (.minus (Instant/now) (Duration/ofDays 365))) ;; TODO: get only new documents
         response (client/get (target-flour "/documents")
                              {
                               ;:query-params  {:dateAfter [date-after]}
