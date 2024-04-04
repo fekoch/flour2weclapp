@@ -8,6 +8,7 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
+  ;; TODO: fetch new documents and create shipments for each
   (println "Hello, World!"))
 
 (defn target-flour [path]
@@ -24,7 +25,7 @@
 
 (defn get-documents
   []
-  "Get all invoice-data "
+  "Get all invoice-data from flour"
   (let [date-after (.toString (.minus (Instant/now) (Duration/ofDays 365)))
         response (client/get (target-flour "/documents")
                              {
@@ -36,10 +37,12 @@
                               :as            :json
                               })]
     (:body response)
+    ; TODO: Filter for only type "R"
     )
   )
 
 (defn target-weclapp [path]
+  "Create a weclapp api url from the path using WECLAPP_TENANT_ID env var"
   (let [tenant (System/getenv "WECLAPP_TENANT_ID")]
     (if (empty? tenant)
       (throw (Exception. "WECLAPP_TENANT_ID not set")))
@@ -47,60 +50,65 @@
     )
   )
 
-(def test-order {
-                 :number "R10776"
-                 :items  [{
-                           :number "ECC_10294401007_44"
-                           :amount 1
-                           }]
-                 })
+(defn lookup-weclapp-id [ean-number]
+  "Get the weclapp articleId for a given ean number"
+  (let [response (client/get (target-weclapp "/article")
+                             {
+                              :query-params  {:ean-eq [ean-number]}
+                              :headers       {"AuthenticationToken" (System/getenv "WECLAPP_TOKEN")}
+                              :cache-control "no-cache"
+                              :cookie-policy :none
+                              :as            :json
+                              }
+                             )]
+    (-> response :body :result first :id)
+    ))
 
 (defn transform-order-items [order-items]
+  "Transform flour order items to weclapp shipment items"
   (map (fn [item]
          {
-          :ean      (item :ean)
-          :quantity (item :amount)
+          :articleId (lookup-weclapp-id (item :ean))
+          :quantity      (item :amount)
           }
          )
        order-items)
   )
 
-(defn create-salesOrder [order customerNumber warehouseId salesChannel]
+
+(defn create-shipment [order customerId warehouseId salesChannel]
+  "Create a new shipment in weclapp using POS_$number as the shipment number."
   (let [
-        ;{
-        ; "customerNumber": "35866",
-        ; "status": "ORDER_CONFIRMATION_PRINTED",
-        ; "orderItems": [
-        ;                {
-        ;                 "articleNumber": "ECC_10294401007_44",
-        ;                 "quantity": 1
-        ;                 }
-        ;                ],
-        ; "salesChannel": "GROSS5",
-        ; "warehouseId": "689724"
-        ; }
         item-data (transform-order-items (order :items))
-        order-data {
-                    :orderNumber    (str "POS_" (order :number))
-                    :customerNumber customerNumber
-                    :status         "ORDER_CONFIRMATION_PRINTED"
-                    :salesChannel   salesChannel
-                    :warehouseId    warehouseId
-                    :orderItems     item-data
-                    }
-        response (client/post (target-weclapp "/salesOrder")
+        shipment-data {
+                       :shipmentNumber   (str "POS_" (order :number))
+                       :recipientPartyId customerId
+                       :status           "NEW" ;; TODO: ask Ben if there is a better status
+                       :shipmentType     "STANDARD" ;; TODO: ask Ben if there is a better type
+                       :salesChannel     salesChannel
+                       :warehouseId      warehouseId
+                       :shipmentItems    item-data
+                       }
+        response (client/post (target-weclapp "/shipment")
                               {
-                               :form-params   order-data
+                               :form-params   shipment-data
                                :content-type  :json
                                :headers       {"AuthenticationToken" (System/getenv "WECLAPP_TOKEN")}
                                :cache-control "no-cache"
                                :cookie-policy :none
+                               :throw-entire-message? true
+                               :debug true ;; FIXME: remove debug after testing
+                               :debug-body true
                                }
                               )]
     response
     )
   )
 
+
+
+
+;; test document with edited in ean number for the product TODO: test after flour has ingested ean numbers
 (def test-document {:description     "",
                     :terminal        {:receipt []},
                     :tags            [],
@@ -127,7 +135,7 @@
                     :sentbymail      false,
                     :prints          [],
                     :secucard        {:receipt nil},
-                    :number          "13001000001",
+                    :number          "13001000003",
                     :completed       false,
                     :client          "65fbe2454f02853f4dacef35",
                     :pos             {:cachier           "",
@@ -193,7 +201,7 @@
                                        :unit                 1,
                                        :ref                  "66030b9f201860003186a386",
                                        :differentialTaxation false,
-                                       :ean                  "4064057590149",
+                                       :ean                  "194891308663",
                                        :noTax                false,
                                        :type                 "article",
                                        :taxRate              19,
@@ -259,3 +267,5 @@
                                       :country      ""},
                     :stock           {:default nil},
                     :totalDue        0})
+
+(defn test-create-shipment [] (create-shipment test-document "2005086" "689724" "GROSS5"))
