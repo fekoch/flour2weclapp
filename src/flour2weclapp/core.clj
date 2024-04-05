@@ -140,7 +140,7 @@
     ))
 
 (defn -main
-  [& args]
+  [& _]
   (let [sourceStoragePlaceId (System/getenv "WECLAPP_STORAGE_PLACE_ID")]
     (if-not sourceStoragePlaceId
       (throw (Exception. "WECLAPP_STORAGE_PLACE_ID not set")))
