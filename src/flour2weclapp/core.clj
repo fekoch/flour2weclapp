@@ -24,7 +24,7 @@
   (let [date-after (.toString (.minus (Instant/now) (Duration/ofDays 1)))
         response (client/get (target-flour "/documents")
                              {
-                              ;:query-params  {:dateAfter [date-after]}
+                              :query-params  {:dateAfter [date-after]}
                               :oauth-token   (System/getenv "FLOUR_TOKEN")
                               :accept        :json
                               :cache-control "no-cache"
