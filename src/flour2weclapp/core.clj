@@ -83,7 +83,7 @@
         shipment-data {
                        :shipmentNumber   (str "POS_" (order :number))
                        :recipientPartyId customerId
-                       :status           "NEW" ;; TODO: ask Ben if there is a better status
+                       :status           "DELIVERY_NOTE_PRINTED" ;; TODO: how to get it to "SHIPPED"?
                        :shipmentType     "STANDARD" ;; TODO: ask Ben if there is a better type
                        :salesChannel     salesChannel
                        :warehouseId      warehouseId
@@ -101,7 +101,7 @@
                                :debug-body true
                                }
                               )]
-    response
+    response ;; TODO: ignore error, if status is 409
     )
   )
 
@@ -135,7 +135,7 @@
                     :sentbymail      false,
                     :prints          [],
                     :secucard        {:receipt nil},
-                    :number          "13001000003",
+                    :number          "13001000005",
                     :completed       false,
                     :client          "65fbe2454f02853f4dacef35",
                     :pos             {:cachier           "",
