@@ -49,7 +49,8 @@
   (let [
         query (cond
                 (seq (flour-article :ean)) {:ean-eq [(flour-article :ean)]}
-                ; NOTE: if :number is the variant article number this will still fail
+                ; NOTE: Fallback, if no ean is set, warning:
+                ; if number is the variant articleNumber this will still fail
                 (seq (flour-article :number)) {:articleNumber-eq [(flour-article :number)]}
                 )
         response (client/get (target-weclapp "/article")
@@ -126,17 +127,18 @@
           items (transform-order-items order-items)]
       (if-not (check-already-synced (document :number))
         ((doseq [item items]
-           ;; NOTE: If this breaks, the document will be partly synced
+           ;; NOTE: If this has an error, the document will be partly synced
            (create-warehouseStockMovement (document :number)
                                           (item :articleId)
                                           (item :quantity)
                                           sourceStoragePlaceId)
            )
          (println (str "Document " (document :number) " synced successfully"))
+         1
          )
         )
       (println (str "Document " (document :number) " already (at least partly) synced")))
-    (catch Exception e (.println *err* (str "Error syncing document " (document :number) ": " e)))
+    (catch Exception e (.println *err* (str "Error syncing document " (document :number) ": " e)) 0)
     ))
 
 (defn -main
@@ -146,10 +148,10 @@
     (if-not sourceStoragePlaceId
       (throw (Exception. "WECLAPP_STORAGE_PLACE_ID not set")))
     (let [documents (filter #(= (:type %) "R") (get-documents))]
-      (doseq [document documents]
-        (process-document document sourceStoragePlaceId)
-        )
+      (println "Syncing done. Total synced:"
+               (reduce + (map #(process-document % sourceStoragePlaceId) documents))
+               "of" (count documents) "documents"
+               )
       )
     )
-  (println "Syncing done")
   )
