@@ -141,6 +141,7 @@
 
 (defn -main
   [& _]
+  (println "Syncing documents from flour to weclapp")
   (let [sourceStoragePlaceId (System/getenv "WECLAPP_STORAGE_PLACE_ID")]
     (if-not sourceStoragePlaceId
       (throw (Exception. "WECLAPP_STORAGE_PLACE_ID not set")))
@@ -150,4 +151,5 @@
         )
       )
     )
+  (println "Syncing done")
   )
