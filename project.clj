@@ -10,5 +10,6 @@
                  [cheshire "5.13.0"]]
   :main ^:skip-aot flour2weclapp.core
   :target-path "target/%s"
+  :uberjar-name "flour2weclapp-0.1.1-standalone.jar"
   :profiles {:uberjar {:aot :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
