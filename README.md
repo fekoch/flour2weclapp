@@ -1,36 +1,14 @@
 # flour2weclapp
 
-FIXME: description
+A Heroku-App that periodically syncs orders from [flour](https://www.flour.io/) to [weclapp](https://www.weclapp.com/).
 
 ## Installation
 
-Download from http://example.com/FIXME.
-
-## Usage
-
-FIXME: explanation
-
-    $ java -jar flour2weclapp-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+Deploy via Heroku and configure to run periodically.
 
 ## License
 
-Copyright © 2024 FIXME
+Copyright © 2024 Felix Koch
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
